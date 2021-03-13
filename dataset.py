@@ -4,7 +4,7 @@ import pandas as pd
 import nltk
 import string
 from collections import Counter
-from models import RNN
+from models import LSTMBasedModel
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 class TextDataset(torch.utils.data.Dataset):
@@ -44,13 +44,14 @@ class TextGenerationModel(pl.LightningModule):
     
     def __init__(self, args):
         super(TextGenerationModel, self).__init__()
-        self.model = RNN(input_size=128, hidden_size=128, output_size=5, n_layers=3)
         self.args = args
-        self.hidden_state = self.model.init_hidden()
+        self.text_dataset = TextDataset(self.args)
+        self.model = LSTMBasedModel(self.text_dataset)
+        self.state_h, self.state_c = self.model.init_hidden(self.args.sequence_length)
         self.loss_fn = torch.nn.CrossEntropyLoss()
     
     def forward(self, x):
-        return self.model.forward(x, self.hidden_state)
+        return self.model.forward(x, (self.state_h, self.state_c))
     
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.args.initial_lr)
@@ -58,9 +59,8 @@ class TextGenerationModel(pl.LightningModule):
         return [optimizer] #, [scheduler]
 
     def train_dataloader(self):
-        text_dataset = TextDataset(self.args)
         loader = torch.utils.data.DataLoader(
-            text_dataset,
+            self.text_dataset,
             batch_size=self.args.batch_size,
             shuffle=True,
             num_workers=self.args.workers,
@@ -70,8 +70,10 @@ class TextGenerationModel(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         x, y = batch
-        y_pred = self.forward(x)
-        loss = self.loss_fn(y_pred, y)
+        y_pred, (self.state_h, self.state_c) = self.forward(x)
+        loss = self.loss_fn(y_pred.transpose(1, 2), y)
+        self.state_c = self.state_c.detach()
+        self.state_h = self.state_h.detach()
         return {'loss': loss}
 
     def training_epoch_end(self, outputs):
@@ -79,7 +81,7 @@ class TextGenerationModel(pl.LightningModule):
         logs = {'avg_loss': avg_loss}
         tensorboard_logs = {'train/avg_loss': avg_loss}
         results = {'log': tensorboard_logs}
-        self.hidden_state = self.model.init_hidden()
+        self.state_h, self.state_c = self.model.init_hidden(self.args.sequence_length)
         return results
 
 
