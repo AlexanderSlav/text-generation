@@ -2,10 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+text-generation-env
 # C extensions
 *.so
-
+.vscode
+Lab4.ipynb
 # Distribution / packaging
 .Python
 build/
