@@ -14,7 +14,7 @@ import numpy as np
 
 
 class TextGenerationModel(pl.LightningModule):
-    def __init__(self, txt, seq_len, layers, batch_size, hidden_size, lr, workers):
+    def __init__(self, txt, seq_len, layers, batch_size, hidden_size, lr, workers, use_gru):
         super(TextGenerationModel, self).__init__()
         self.save_hyperparameters()
         self.train_dataset = TextDataset(txt_path=txt, seq_len=seq_len)
@@ -26,6 +26,7 @@ class TextGenerationModel(pl.LightningModule):
             tokens=tokens,
             n_layers=layers,
             n_hidden=hidden_size,
+            use_gru=use_gru
         )
         self.num_worksers = workers
         self.batch_size = batch_size
