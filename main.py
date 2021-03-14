@@ -18,6 +18,7 @@ def parse_args():
     parser.add_argument('-test', action='store_true', help='inference mode on')
     parser.add_argument('-chk', '--checkpoint', help='path to checkpoint (for inference only)')
     parser.add_argument('--use_gru', action='store_true', help='use lstm instead of gru')
+    parser.add_argument("--temp", type=float, default=1.0, help='softmax temperature parameter')
 
 
     args = parser.parse_args()
@@ -39,6 +40,7 @@ def main():
         lr=args.initial_lr,
         workers=args.workers,
         use_gru=args.use_gru,
+        temp=args.temp,
     )
 
     if not args.test:

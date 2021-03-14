@@ -14,7 +14,7 @@ import numpy as np
 
 
 class TextGenerationModel(pl.LightningModule):
-    def __init__(self, txt, seq_len, layers, batch_size, hidden_size, lr, workers, use_gru):
+    def __init__(self, txt, seq_len, layers, batch_size, hidden_size, lr, workers, use_gru, temp):
         super(TextGenerationModel, self).__init__()
         self.save_hyperparameters()
         self.train_dataset = TextDataset(txt_path=txt, seq_len=seq_len, n_steps=batch_size)
@@ -33,6 +33,7 @@ class TextGenerationModel(pl.LightningModule):
         self.lr = lr
         self.state_h, self.state_c = self.model.init_hidden(self.seq_len)
         self.loss_fn = CrossEntropyLoss()
+        self.temp = temp
 
     def forward(self, x):
         return self.model.forward(x, (self.state_h, self.state_c))
@@ -68,6 +69,7 @@ class TextGenerationModel(pl.LightningModule):
         y.squeeze_()
 
         y_pred, (self.state_h, self.state_c) = self.forward(x)
+        y_pred = y_pred / self.temp
         loss = self.loss_fn(y_pred, y.flatten())
         # self.train_acc(F.softmax(y_pred.transpose(1, 2), dim=0), y)
         self.state_c = self.state_c.detach()
@@ -89,6 +91,7 @@ class TextGenerationModel(pl.LightningModule):
         y.squeeze_()
 
         y_pred, (self.state_h, self.state_c) = self.forward(x)
+        y_pred = y_pred / self.temp
         val_loss = self.loss_fn(y_pred, y.flatten())
         # self.train_acc(F.softmax(y_pred.transpose(1, 2), dim=0), y)
         self.state_c = self.state_c.detach()
