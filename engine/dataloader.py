@@ -13,12 +13,17 @@ class TextDataset(Dataset):
 
         self.int2char, self.char2int = self.get_lookup_tables(data)
         self.encoded = np.array([self.char2int[ch] for ch in data])
+        split_element = int(0.8 * len(self.encoded))
+        if mode == 'train':
+            self.encoded = self.encoded[:split_element]
+        else:
+            self.encoded = self.encoded[split_element:]
         self.chars = tuple(self.char2int.keys())
         self.batches = list(self.get_batches(self.encoded, seq_len, n_steps))
         self.n_symbols = len(self.chars)
 
     def get_lookup_tables(self, text):
-        chars = tuple(set(text))
+        chars = tuple(sorted(set(text)))
         int2char = dict(enumerate(chars))
         char2int = {ch: ii for ii, ch in int2char.items()}
 

@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class CharLSTM(nn.Module):
     def __init__(self, tokens, n_hidden=256, n_layers=2,
-                 drop_prob=0.5):
+                 drop_prob=0.5, use_gru=False):
         super().__init__()
         self.drop_prob = drop_prob
         self.n_layers = n_layers
@@ -15,8 +15,11 @@ class CharLSTM(nn.Module):
         self.char2int = {ch: ii for ii, ch in self.int2char.items()}
 
         self.dropout = nn.Dropout(drop_prob)
-        self.lstm = nn.LSTM(len(self.chars), n_hidden, n_layers,
-                            dropout=drop_prob, batch_first=True)
+        self.rnn = nn.LSTM(len(self.chars), n_hidden, n_layers,
+                           dropout=drop_prob, batch_first=True) if not use_gru else nn.GRU(len(self.chars), n_hidden,
+                                                                                           n_layers,
+                                                                                           dropout=drop_prob,
+                                                                                           batch_first=True)
         self.fc = nn.Linear(n_hidden, len(self.chars))
 
         # self.init_weights()
@@ -24,11 +27,12 @@ class CharLSTM(nn.Module):
     def forward(self, x, hc):
         ''' Forward pass through the network '''
 
-        x, (h, c) = self.lstm(x, hc)
+        x, (h, c) = self.rnn(x, hc)
         x = self.dropout(x)
 
         # Stack up LSTM outputs
-        x = x.view(x.size()[0] * x.size()[1], self.n_hidden)
+        x = x.reshape(-1, self.n_hidden)
+        # x = x.view(x.size()[0] * x.size()[1], self.n_hidden)
 
         x = self.fc(x)
 

@@ -8,11 +8,11 @@ import torch
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--txt', type=str, help='path to txt file', required=True)
-    parser.add_argument('-seq_len', '--sequence_length', type=int, default=59, help='length of input sequence')
+    parser.add_argument('-seq_len', '--sequence_length', type=int, default=60, help='length of input sequence')
     parser.add_argument('--layers', default=2, type=int, help='Num of RNN layers')
     parser.add_argument('-hs', '--hidden_size', default=256, type=int, help='hidden size')
-    parser.add_argument('-lr', '--initial_lr', type=float, default=0.001, help='set initial learning rate')
-    parser.add_argument('-max_epoch', type=int, default=10, help='max epoch amount')
+    parser.add_argument('-lr', '--initial_lr', type=float, default=0.0001, help='set initial learning rate')
+    parser.add_argument('-max_epoch', type=int, default=50, help='max epoch amount')
     parser.add_argument('-w', '--workers', type=int, default=0, help='workers amount')
     parser.add_argument('-batch', '--batch_size', type=int, default=1, help='batch size')
     parser.add_argument('-test', action='store_true', help='inference mode on')
@@ -26,8 +26,8 @@ def main():
     args = parse_args()
     txt_path = args.txt
     seq_len = args.sequence_length
-    time_now = datetime.datetime.now().strftime("%d_%m_%Y_%H:%M:%S")
-    logger_dir = f'checkpoints/{time_now}'
+    time_now = datetime.datetime.now().strftime("%H:%M")
+    logger_dir = f'checkpoints/{time_now}_seq_len_{args.sequence_length}_n_layers_{args.layers}_lr_{args.initial_lr}_hidden_state_{args.hidden_size}'
 
     model = TextGenerationModel(
         txt=txt_path,
@@ -51,8 +51,9 @@ def main():
         trainer.fit(model)
 
     if args.checkpoint is not None:
-        checkpoint = torch.load(args.checkpoint)['state_dict']
-        model.load_state_dict(checkpoint)
+        # checkpoint = torch.load(args.checkpoint)['state_dict']
+        model = TextGenerationModel.load_from_checkpoint(args.checkpoint)
+        # model.load_state_dict(checkpoint)
 
     result = model.inference(1000, "The")
     print(result)
