@@ -17,8 +17,8 @@ class TextGenerationModel(pl.LightningModule):
     def __init__(self, txt, seq_len, layers, batch_size, hidden_size, lr, workers, use_gru):
         super(TextGenerationModel, self).__init__()
         self.save_hyperparameters()
-        self.train_dataset = TextDataset(txt_path=txt, seq_len=seq_len)
-        self.val_dataset = TextDataset(txt_path=txt, mode='val', seq_len=seq_len)
+        self.train_dataset = TextDataset(txt_path=txt, seq_len=seq_len, n_steps=batch_size)
+        self.val_dataset = TextDataset(txt_path=txt, mode='val', seq_len=seq_len, n_steps=batch_size)
         self.metric = pl.metrics.Accuracy()
         self.seq_len = seq_len
         tokens = self.train_dataset.chars
@@ -45,7 +45,6 @@ class TextGenerationModel(pl.LightningModule):
     def train_dataloader(self):
         loader = torch.utils.data.DataLoader(
             self.train_dataset,
-            batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_worksers,
             pin_memory=True,
@@ -56,7 +55,6 @@ class TextGenerationModel(pl.LightningModule):
     def val_dataloader(self):
         loader = torch.utils.data.DataLoader(
             self.val_dataset,
-            batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_worksers,
             pin_memory=True,
