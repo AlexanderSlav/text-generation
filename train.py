@@ -4,10 +4,12 @@ import argparse
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from torch.nn import CrossEntropyLoss
-
+import string
+import random
+import torch.nn.functional as F
 from models.model import CharLSTM
 from engine.dataloader import TextDataset
-
+import numpy as np
 
 
 
@@ -67,4 +69,67 @@ class TextGenerationModel(pl.LightningModule):
         # logs = {'avg_loss': avg_loss}
         # tensorboard_logs = {'train/avg_loss': avg_loss}
         # results = {'log': tensorboard_logs}
+        with torch.no_grad():
+            print("\n")
+            print(self.inference(generate=500))
+            print("\n")
+        self.train()
         self.state_h, self.state_c = self.model.init_hidden(self.seq_len)
+
+    @torch.no_grad()
+    def inference(self, generate, inp=None):
+        self.eval()
+        self.model.cuda()
+
+        with torch.no_grad():
+            if inp is not None:
+                chars = [ch for ch in inp]
+            else:
+                chars = [random.choice(string.ascii_letters[25:])]
+
+            self.state_h, self.state_c = self.model.init_hidden(1)
+
+            for ch in chars:
+                char = self.predict(ch, top_k=10)
+
+            chars.append(char)
+
+            for ii in range(generate):
+                char = self.predict(chars[-1], top_k=10)
+                chars.append(char)
+
+        return ''.join(chars)
+
+    def predict(self, char, cuda=False, top_k=None):
+        ''' Given a character, predict the next character.
+
+            Returns the predicted character and the hidden state.
+        '''
+
+        # if h is None:
+        #     h = self.init_hidden(1)
+
+        x = torch.tensor([self.model.char2int[char]])
+        x = F.one_hot(x, len(self.model.chars))
+
+        inputs = x.unsqueeze(0).cuda().float()
+
+        # h = tuple([each.data for each in h])
+        # self.state_h, self.state_c = self.model.init_hidden(self.seq_len)
+        out, (self.state_h, self.state_c) = self.forward(inputs)
+        # out, h = self.forward(inputs)
+
+        p = F.softmax(out).data
+
+        p = p.cpu()
+
+        if top_k is None:
+            top_ch = np.arange(len(self.model.chars))
+        else:
+            p, top_ch = p.topk(top_k)
+            top_ch = top_ch.numpy().squeeze()
+
+        p = p.numpy().squeeze()
+        char = np.random.choice(top_ch, p=p / p.sum())
+
+        return self.model.int2char[char]
