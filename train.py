@@ -119,7 +119,7 @@ class TextGenerationModel(pl.LightningModule):
         if inp is not None:
             chars = [ch for ch in inp]
         else:
-            chars = [random.choice(string.ascii_letters[25:])]
+            chars = [random.choice(list(self.val_dataset.char2int.keys()))]
 
         self.state_h, self.state_c = self.model.init_hidden(1)
 

@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 import numpy as np
 import torch
 import torch.nn.functional as F
+import re
 
 class TextDataset(Dataset):
     def __init__(self, txt_path, mode='train', seq_len=50, n_steps=50):

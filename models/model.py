@@ -6,6 +6,7 @@ class CharLSTM(nn.Module):
     def __init__(self, tokens, n_hidden=256, n_layers=2,
                  drop_prob=0.5, use_gru=False):
         super().__init__()
+        self.use_gru = use_gru
         self.drop_prob = drop_prob
         self.n_layers = n_layers
         self.n_hidden = n_hidden
@@ -16,7 +17,7 @@ class CharLSTM(nn.Module):
 
         self.dropout = nn.Dropout(drop_prob)
         self.rnn = nn.LSTM(len(self.chars), n_hidden, n_layers,
-                           dropout=drop_prob, batch_first=True) if not use_gru else nn.GRU(len(self.chars), n_hidden,
+                           dropout=drop_prob, batch_first=True) if not self.use_gru else nn.GRU(len(self.chars), n_hidden,
                                                                                            n_layers,
                                                                                            dropout=drop_prob,
                                                                                            batch_first=True)
@@ -26,8 +27,11 @@ class CharLSTM(nn.Module):
 
     def forward(self, x, hc):
         ''' Forward pass through the network '''
-
-        x, (h, c) = self.rnn(x, hc)
+        if not self.use_gru:
+            x, (h, c) = self.rnn(x, hc)
+        else:
+            x, h = self.rnn(x, hc[0])
+            c = self.init_hidden(1)[0]
         x = self.dropout(x)
 
         # Stack up LSTM outputs

@@ -12,16 +12,15 @@ def parse_args():
     parser.add_argument('--layers', default=2, type=int, help='Num of RNN layers')
     parser.add_argument('-hs', '--hidden_size', default=256, type=int, help='hidden size')
     parser.add_argument('-lr', '--initial_lr', type=float, default=0.001, help='set initial learning rate')
-    parser.add_argument('-max_epoch', type=int, default=50, help='max epoch amount')
+    parser.add_argument('-max_epoch', type=int, default=100, help='max epoch amount')
     parser.add_argument('-w', '--workers', type=int, default=0, help='workers amount')
     parser.add_argument('-batch', '--batch_size', type=int, default=1, help='batch size')
     parser.add_argument('-test', action='store_true', help='inference mode on')
     parser.add_argument('-chk', '--checkpoint', help='path to checkpoint (for inference only)')
     parser.add_argument('--use_gru', action='store_true', help='use lstm instead of gru')
-
-
     args = parser.parse_args()
     return args
+
 
 def main():
     args = parse_args()
@@ -30,16 +29,21 @@ def main():
     time_now = datetime.datetime.now().strftime("%H:%M")
     logger_dir = f'checkpoints/{time_now}_seq_len_{args.sequence_length}_n_layers_{args.layers}_lr_{args.initial_lr}_hidden_state_{args.hidden_size}'
 
-    model = TextGenerationModel(
-        txt=txt_path,
-        seq_len=seq_len,
-        layers=args.layers,
-        batch_size=args.batch_size,
-        hidden_size=args.hidden_size,
-        lr=args.initial_lr,
-        workers=args.workers,
-        use_gru=args.use_gru,
-    )
+    if args.checkpoint is not None:
+        # checkpoint = torch.load(args.checkpoint)['state_dict']
+        model = TextGenerationModel.load_from_checkpoint(args.checkpoint).cuda()
+        # model.load_state_dict(checkpoint)
+    else:
+        model = TextGenerationModel(
+            txt=txt_path,
+            seq_len=seq_len,
+            layers=args.layers,
+            batch_size=args.batch_size,
+            hidden_size=args.hidden_size,
+            lr=args.initial_lr,
+            workers=args.workers,
+            use_gru=args.use_gru,
+        )
 
     if not args.test:
         trainer = pl.Trainer(
@@ -57,8 +61,11 @@ def main():
         model = TextGenerationModel.load_from_checkpoint(args.checkpoint).cuda()
         # model.load_state_dict(checkpoint)
 
-    result = model.inference(1000, "The")
-    print(result)
+    if args.test:
+        model = model.cuda()
+        result = model.inference(500, "Игра проходит")
+        print(result)
+
 
 if __name__ == '__main__':
     main()

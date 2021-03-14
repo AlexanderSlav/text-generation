@@ -2,6 +2,8 @@ import argparse
 import json
 from loguru import logger
 from tqdm import tqdm
+import re
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -16,8 +18,9 @@ def main(args):
     with open(args.input_data_path, "r") as input_file:
         input_data = json.load(input_file)
     with open(args.output_data_path, "w") as output_file:
-        for article in tqdm(input_data):
-            output_file.write(f'{article["text"]}\n\n')
+        for article in tqdm(input_data["catalog"]):
+            data = re.sub('[^А-Яа-я\s]+', '', article["text"])
+            output_file.write(f'{data}\n\n')
     logger.info('Finish convertion')
 
 
