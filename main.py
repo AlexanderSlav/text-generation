@@ -12,12 +12,13 @@ def parse_args():
     parser.add_argument('--layers', default=2, type=int, help='Num of RNN layers')
     parser.add_argument('-hs', '--hidden_size', default=256, type=int, help='hidden size')
     parser.add_argument('-lr', '--initial_lr', type=float, default=0.001, help='set initial learning rate')
-    parser.add_argument('-max_epoch', type=int, default=100, help='max epoch amount')
-    parser.add_argument('-w', '--workers', type=int, default=0, help='workers amount')
-    parser.add_argument('-batch', '--batch_size', type=int, default=1, help='batch size')
+    parser.add_argument('-max_epoch', type=int, default=50, help='max epoch amount')
+    parser.add_argument('-w', '--workers', type=int, default=4, help='workers amount')
+    parser.add_argument('-batch', '--batch_size', type=int, default=50, help='batch size')
     parser.add_argument('-test', action='store_true', help='inference mode on')
     parser.add_argument('-chk', '--checkpoint', help='path to checkpoint (for inference only)')
     parser.add_argument('--use_gru', action='store_true', help='use lstm instead of gru')
+    parser.add_argument("--temp", type=float, default=1.0, help='softmax temperature parameter')
     args = parser.parse_args()
     return args
 
@@ -43,6 +44,7 @@ def main():
             lr=args.initial_lr,
             workers=args.workers,
             use_gru=args.use_gru,
+            temp=args.temp,
         )
 
     if not args.test:
