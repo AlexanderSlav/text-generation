@@ -3,9 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+text-generation-env
 # C extensions
 *.so
 
+checkpoints/
+.pt
+.vscode
+Lab4.ipynb
 # Distribution / packaging
 .Python
 build/
@@ -120,6 +125,8 @@ venv.bak/
 # mkdocs documentation
 /site
 
+.idea
+.vscode
 # mypy
 .mypy_cache/
 .dmypy.json
