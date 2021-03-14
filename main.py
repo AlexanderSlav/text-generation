@@ -52,7 +52,7 @@ def main():
 
     if args.checkpoint is not None:
         # checkpoint = torch.load(args.checkpoint)['state_dict']
-        model = TextGenerationModel.load_from_checkpoint(args.checkpoint)
+        model = TextGenerationModel.load_from_checkpoint(args.checkpoint).cuda()
         # model.load_state_dict(checkpoint)
 
     result = model.inference(1000, "The")

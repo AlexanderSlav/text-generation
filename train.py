@@ -101,21 +101,19 @@ class TextGenerationModel(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         avg_metric = torch.stack([x['val_acc'] for x in outputs]).mean()
-        self.log("avg_val_loss", avg_loss)
-        self.log("avg_accuracy", avg_metric)
+        self.log("avg_val_loss", avg_loss, prog_bar=True)
+        self.log("avg_accuracy", avg_metric, prog_bar=True)
         # logs = {'avg_loss': avg_loss}
         # tensorboard_logs = {'train/avg_loss': avg_loss}
         # results = {'log': tensorboard_logs}
-        with torch.no_grad():
-            print("\n")
-            print(self.inference(generate=500))
-            print("\n")
-        self.train()
+        # with torch.no_grad():
+        print("\n")
+        print(self.inference(generate=500))
+        print("\n")
         self.state_h, self.state_c = self.model.init_hidden(self.seq_len)
 
     @torch.no_grad()
     def inference(self, generate, inp=None):
-        self.eval()
 
         if inp is not None:
             chars = [ch for ch in inp]
